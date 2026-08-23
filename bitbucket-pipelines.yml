@@ -1,0 +1,26 @@
+image: atlassian/pipelines-awscli
+
+pipelines:
+  default:
+    - step:
+        name: Open Regal AI Scan
+        services:
+          - docker
+
+        script:
+          - aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+          - aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+          - aws configure set default.region ap-southeast-1
+
+          - aws sts get-caller-identity
+
+          - aws ecr get-login-password --region ap-southeast-1 |
+              docker login --username AWS --password-stdin 650251691774.dkr.ecr.ap-southeast-1.amazonaws.com
+
+          - docker pull 650251691774.dkr.ecr.ap-southeast-1.amazonaws.com/open-regal-scanner:1.0.0
+
+          - >
+            docker run --rm
+            -v "$BITBUCKET_CLONE_DIR:/workspace"
+            650251691774.dkr.ecr.ap-southeast-1.amazonaws.com/open-regal-scanner:1.0.0
+            --path /workspace  
