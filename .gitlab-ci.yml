@@ -1,0 +1,48 @@
+stages:
+  - governance
+
+open_regal_ai_scan:
+  stage: governance
+
+  image:
+    name: docker:27
+    entrypoint: [""]
+
+  services:
+    - name: docker:27-dind
+      alias: docker-dind
+
+  variables:
+    AWS_DEFAULT_REGION: "ap-southeast-1"
+    AWS_REGION: "ap-southeast-1"
+    DOCKER_HOST: tcp://docker-dind:2375
+    DOCKER_TLS_CERTDIR: ""
+
+  before_script:
+    # Install AWS CLI
+    - apk add --no-cache aws-cli
+
+    # Verify AWS credentials
+    - test -n "$AWS_ACCESS_KEY_ID" || (echo "AWS_ACCESS_KEY_ID is missing" && exit 1)
+    - test -n "$AWS_SECRET_ACCESS_KEY" || (echo "AWS_SECRET_ACCESS_KEY is missing" && exit 1)
+
+    # Verify AWS authentication
+    - aws sts get-caller-identity
+
+    # Login to ECR
+    - aws ecr get-login-password --region ap-southeast-1 |
+        docker login
+        --username AWS
+        --password-stdin
+        650251691774.dkr.ecr.ap-southeast-1.amazonaws.com
+
+  script:
+    # Pull scanner image
+    - docker pull 650251691774.dkr.ecr.ap-southeast-1.amazonaws.com/open-regal-scanner:1.0.0
+
+    # Run Open Regal scanner
+    - >
+      docker run --rm
+      -v "$CI_PROJECT_DIR:/workspace"
+      650251691774.dkr.ecr.ap-southeast-1.amazonaws.com/open-regal-scanner:1.0.0
+      --path /workspace
