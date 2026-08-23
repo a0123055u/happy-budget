@@ -4,19 +4,19 @@ phases:
   pre_build:
     commands:
       - echo "=== Open Regal AI Scanner ==="
-      - echo "Repository: ${CODEBUILD_SOURCE_REPO_URL}"
-      - echo "Commit: ${CODEBUILD_RESOLVED_SOURCE_VERSION}"
-      - echo "Region: ${AWS_DEFAULT_REGION}"
+      - echo "Repository ${CODEBUILD_SOURCE_REPO_URL}"
+      - echo "Commit ${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+      - echo "Region ${AWS_DEFAULT_REGION}"
       - aws sts get-caller-identity
       - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 650251691774.dkr.ecr.ap-southeast-1.amazonaws.com
       - docker pull 650251691774.dkr.ecr.ap-southeast-1.amazonaws.com/open-regal-scanner:1.0.0
 
   build:
     commands:
-      - echo "Starting Open Regal AI scan..."
-      - echo "Scan path: ${CODEBUILD_SRC_DIR}"
+      - echo "Starting Open Regal AI scan"
+      - echo "Scan path ${CODEBUILD_SRC_DIR}"
       - docker run --rm -v "${CODEBUILD_SRC_DIR}:/workspace" 650251691774.dkr.ecr.ap-southeast-1.amazonaws.com/open-regal-scanner:1.0.0 --path /workspace
 
   post_build:
     commands:
-      - echo "Open Regal AI scan completed."
+      - echo "Open Regal AI scan completed"
