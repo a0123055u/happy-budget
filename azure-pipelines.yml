@@ -1,0 +1,72 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  AWS_REGION: 'ap-southeast-1'
+  ECR_REGISTRY: '650251691774.dkr.ecr.ap-southeast-1.amazonaws.com'
+  SCANNER_IMAGE: 'open-regal-scanner:1.0.0'
+
+steps:
+
+  - checkout: self
+
+  - bash: |
+      set -e
+
+      echo "=============================================="
+      echo "        OPEN REGAL AI SCANNER"
+      echo "=============================================="
+
+      echo "Repository: $(Build.Repository.Name)"
+      echo "Branch: $(Build.SourceBranch)"
+      echo "Commit: $(Build.SourceVersion)"
+      echo "Scan Path: $(Build.SourcesDirectory)"
+
+      echo ""
+      echo "Checking AWS CLI..."
+      aws --version
+
+      echo ""
+      echo "Checking Docker..."
+      docker --version
+
+      echo ""
+      echo "Checking AWS identity..."
+      aws sts get-caller-identity
+
+      echo ""
+      echo "Logging in to Amazon ECR..."
+
+      aws ecr get-login-password \
+        --region "$(AWS_REGION)" |
+        docker login \
+          --username AWS \
+          --password-stdin \
+          "$(ECR_REGISTRY)"
+
+      echo ""
+      echo "Pulling Open Regal scanner..."
+
+      docker pull "$(ECR_REGISTRY)/$(SCANNER_IMAGE)"
+
+      echo ""
+      echo "Running Open Regal scanner..."
+
+      docker run --rm \
+        -v "$(Build.SourcesDirectory):/workspace" \
+        "$(ECR_REGISTRY)/$(SCANNER_IMAGE)" \
+        --path /workspace
+
+      echo ""
+      echo "=============================================="
+      echo "        OPEN REGAL SCAN COMPLETED"
+      echo "=============================================="
+
+    displayName: 'Open Regal AI Governance Scan'
+
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
