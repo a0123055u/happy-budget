@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Evaluate Metadata
         env:
-          REGAL_API_URL: ${{ vars.REGAL_API_URL }}
+          REGAL_API_URL: ${{ vars.REGAL_API_URL || 'https://96b2-38-29-157-115.ngrok-free.app' }}
           REGAL_API_TOKEN: ${{ secrets.REGAL_API_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
