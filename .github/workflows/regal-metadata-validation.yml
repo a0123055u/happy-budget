@@ -1,0 +1,39 @@
+name: REGAL Metadata Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  regal-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Evaluate Metadata
+        env:
+          REGAL_API_URL: ${{ vars.REGAL_API_URL }}
+          REGAL_API_TOKEN: ${{ secrets.REGAL_API_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          RESPONSE=$(curl --fail-with-body -sS \
+            -X POST "$REGAL_API_URL/pipeline/api/v1/evaluate" \
+            -H "Authorization: Bearer $REGAL_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg repo "$REPOSITORY" \
+              --arg sha "$COMMIT_SHA" \
+              '{repository: $repo, commit_sha: $sha}')")
+
+          DECISION=$(echo "$RESPONSE" | jq -er '.decision')
+
+          if [ "$DECISION" != "ALLOW" ]; then
+            echo "Pipeline cannot proceed: $DECISION"
+            exit 1
+          fi
